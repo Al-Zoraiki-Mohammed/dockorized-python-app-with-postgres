@@ -8,16 +8,22 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5433:5432"  # Exposes PostgreSQL port for local access
+      - "5433:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data # persistent storage for database
+      - db_data:/var/lib/postgresql/data
+    healthcheck: # <-- ADD THIS BLOCK
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
-      - db
+      db:
+        condition: service_healthy # <-- CHANGE THIS LINE (requires the healthcheck above)
 
 volumes:
   db_data:
